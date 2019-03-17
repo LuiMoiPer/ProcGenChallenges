@@ -24,14 +24,18 @@ def Main():
     #DrawGardenOutine(garden)
 
     #export the layout
-    print(json.dumps(garden))
+    print(json.dumps(garden, indent = 4))
+    file = open('Garden.json', 'w')
+    file.write(json.dumps(garden, indent = 4))
+    file.close()
+
 
 #The formmal grammar that describes a garden
 def GetGrammar():
     grammar = {
         'Garden' : [
-            '{"Garden" : {"Plots" : \[#Plots#\], "Features" : \[#Features#\]}}',
-            '{"Garden" : {"Plots" : \[#Plots#\]}}'
+            '{"Plots" : \[#Plots#\], "Features" : \[#Features#\]}',
+            '{"Plots" : \[#Plots#\]}'
         ],
 
         'Plots' : [
@@ -121,18 +125,20 @@ def PrimeFactors(n):
 
 #Choose how big the room is going to be
 def SetRoomSizes(g):
-    numPlots = len(g['Garden']['Plots'])
-    numFeats = len(g['Garden'].get('Features', []))
+    numPlots = len(g['Plots'])
+    numFeats = len(g.get('Features', []))
     #print(f'Plots: {numPlots}\nFeats: {numFeats}\nTotal: {numPlots + numFeats}')
 
     #loop through each plot and get size
-    for plot in g['Garden']['Plots']:
-        plot['XDim'], plot['YDim'] = SetPlotSize(plot)
+    for plot in g['Plots']:
+        plot['Size'] = {}
+        plot['Size']['x'], plot['Size']['y'] = SetPlotSize(plot)
 
     #loop through each feature and get a size
-    if g['Garden'].get('Features') != None:
-        for feature in g['Garden']['Features']:
-            feature['XDim'], feature['YDim'] = SetFeatureSize(feature)
+    if g.get('Features') != None:
+        for feature in g['Features']:
+            feature['Size'] = {}
+            feature['Size']['x'], feature['Size']['y'] = SetFeatureSize(feature)
 
 #Takes in a plot and adds an XDim and YDim
 def SetPlotSize(p):
@@ -262,116 +268,170 @@ def GetDimensions(a):
 def SetRoomPositions(g):
     #get all the rooms
     rooms = []
-    for plot in g['Garden']['Plots']:
+    for plot in g['Plots']:
         rooms.append(plot)
-    for feature in g['Garden'].get('Features', []):
+    for feature in g.get('Features', []):
         rooms.append(feature)
 
     #set all the rooms to 0, 0
     for room in rooms:
-        room['XLoc'], room['YLoc'] = 0, 0
+        room['Location'] = {}
+        room['Location']['x'], room['Location']['y'] = 0, 0
+        room['Color'] = (127, 127, 127)
         #print(room)
 
     #loop setup
+    i = 0
     foundOverlap = True
     while foundOverlap == True:
         foundOverlap = False
 
         #room to be compared with the others
         for currRoom in rooms:
+
+            #set currRoom to be red
+            currRoom['Color'] = (255, 100, 100)
+
             for room in rooms:
                 #if its the same room skip it
                 if currRoom == room:
                     continue
 
+                #set the room color to blue
+                room['Color'] = (100, 100, 255)
+
                 #if rooms overlap the move one
                 if AreOverlapping(currRoom, room):
                     foundOverlap = True
                     '''
-                    currRoom['XLoc'] += random.randrange(3) - 1
-                    currRoom['YLoc'] += random.randrange(3) - 1
-                    '''
                     if random.randrange(2) % 2 == 0:
-                        currRoom['XLoc'] += random.randrange(3) - 1
+                        room['XLoc'] += random.choice([1, -1])
                     else:
-                        currRoom['YLoc'] += random.randrange(3) - 1
-    #Shift everything so there are no negative x or y locations
-    minX = math.inf
-    minY = math.inf
-    for room in rooms:
-        if room['XLoc'] < minX:
-            minX = room['XLoc']
-        if room['YLoc'] < minY:
-            minY = room['YLoc']
+                        room['YLoc'] += random.choice([1, -1])
+                    '''
+                    # find the distance to the overlapping block
+                    xDist, yDist = GetDistance(currRoom, room)
 
-    #subtract the minX/Y room to shift it closer to 0,0
+                    #move it 1 unit away in the axis it is closest
+                    if xDist < yDist:
+                        room['Location']['x'] -= math.copysign(1, xDist)
+                    else:
+                        room['Location']['y'] -= math.copysign(1, yDist)
+                    ShiftPositions(g)
+                    DrawGardenOutine(g, f'./output/{str(i)}')
+                    i += 1
+
+                #reset the room color
+                room['Color'] = (127, 127, 127)
+
+            #reset the room color
+            currRoom['Color'] = (127, 127, 127)
+
     for room in rooms:
-        room['XLoc'] -= minX
-        room['YLoc'] -= minY
+        room['Location']['x'] = float(room['Location']['x'])
+        room['Location']['y'] = float(room['Location']['y'])
+        room['Size']['x'] = float(room['Size']['x'])
+        room['Size']['y'] = float(room['Size']['y'])
+        del room['Color']
 
 def AreOverlapping(a, b):
     #check if a is to left of b
-    if a['XLoc'] + a['XDim'] < b['XLoc']:
+    if a['Location']['x'] + a['Size']['x'] < b['Location']['x']:
         return False
     #check if a is to right of b
-    if a['XLoc'] > b['XLoc'] + b['XDim']:
+    if a['Location']['x'] > b['Location']['x'] + b['Size']['x']:
         return False
     #check if a is above b
-    if a['YLoc'] + a['YDim'] < b['YLoc']:
+    if a['Location']['y'] + a['Size']['y'] < b['Location']['y']:
         return False
     #check if a is below b
-    if a['YLoc'] > b['YLoc'] + b['YDim']:
+    if a['Location']['y'] > b['Location']['y'] + b['Size']['y']:
         return False
     return True
 
 def AreTouching(a, b):
     #check if a is to left of b
-    if a['XLoc'] + a['XDim'] < b['XLoc']:
+    if a['Location']['x'] + a['Size']['x'] <= b['Location']['x']:
         return False
     #check if a is to right of b
-    if a['XLoc'] > b['XLoc'] + b['XDim']:
+    if a['Location']['x'] >= b['Location']['x'] + b['Size']['x']:
         return False
     #check if a is above b
-    if a['YLoc'] + a['YDim'] < b['YLoc']:
+    if a['Location']['y'] + a['Size']['y'] <= b['Location']['y']:
         return False
     #check if a is below b
-    if a['YLoc'] > b['YLoc'] + b['YDim']:
+    if a['Location']['y'] >= b['Location']['y'] + b['Size']['y']:
         return False
     return True
 
-def DrawGardenOutine(g):
+def DrawGardenOutine(g, filename = 'layout'):
     #get all rooms
     rooms = []
-    for plot in g['Garden']['Plots']:
+    for plot in g['Plots']:
         rooms.append(plot)
-    for feature in g['Garden'].get('Features', []):
+    for feature in g.get('Features', []):
         rooms.append(feature)
 
     maxX = -math.inf
     maxY = -math.inf
     #Find the max x and y
     for room in rooms:
-        if room['XLoc'] + room['XDim'] > maxX:
-            maxX = room['XLoc'] + room['XDim']
-        if room['YLoc'] + room['YDim'] > maxY:
-            maxY = room['YLoc'] + room['YDim']
+        if room['Location']['x'] + room['Size']['x'] > maxX:
+            maxX = room['Location']['x'] + room['Size']['x']
+        if room['Location']['y'] + room['Size']['y'] > maxY:
+            maxY = room['Location']['y'] + room['Size']['y']
 
     #make an image of size max x y
     scale = 100
-    image = Image.new('RGB', (maxX*scale, maxY*scale), (255, 255, 255))
+    image = Image.new('RGB', (int(maxX*scale), int(maxY*scale)), (255, 255, 255))
 
 
     #draw a rectangle for each room
     draw = ImageDraw.Draw(image)
     for room in rooms:
-        topLeft = (room['XLoc'] * scale, room['YLoc'] * scale)
-        botRight = ((room['XLoc'] + room['XDim']) * scale, (room['YLoc'] + room['YDim']) * scale)
-        fill = (random.randrange(256), random.randrange(256), random.randrange(256))
+        topLeft = (room['Location']['x'] * scale, room['Location']['y'] * scale)
+        botRight = ((room['Location']['x'] + room['Size']['x']) * scale, (room['Location']['y'] + room['Size']['y']) * scale)
+        fill = (room['Color'])
         outline = (0, 0, 0)
         draw.rectangle([topLeft, botRight], fill, outline, 3)
 
     #save image
-    image.save('layout.png')
+    image.save(filename,'png')
 
+#Shift everything so there are no negative x or y locations
+def ShiftPositions(g):
+    #get all the rooms
+    rooms = []
+    for plot in g['Plots']:
+        rooms.append(plot)
+    for feature in g.get('Features', []):
+        rooms.append(feature)
+
+    #Shift everything so there are no negative x or y locations
+    minX = math.inf
+    minY = math.inf
+    for room in rooms:
+        if room['Location']['x'] < minX:
+            minX = room['Location']['x']
+        if room['Location']['y'] < minY:
+            minY = room['Location']['y']
+
+    #subtract the minX/Y room to shift it closer to 0,0
+    for room in rooms:
+        room['Location']['x'] -= minX
+        room['Location']['y'] -= minY
+
+def GetDistance(a, b):
+    aCenter = [
+        a['Location']['x'] + a['Size']['x'] / 2,
+        a['Location']['y'] + a['Size']['y'] / 2,
+    ]
+
+    bCenter = [
+        b['Location']['x'] + b['Size']['x'] / 2,
+        b['Location']['y'] + b['Size']['y'] / 2,
+    ]
+
+    return aCenter[0] - bCenter[0], aCenter[1] - bCenter[1]
 if __name__ == "__main__":
     Main()
