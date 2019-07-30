@@ -69,6 +69,8 @@ def getPolygonLines(shapeInfo):
     return lines
 
 def getStarPolygon(bounds, sides=3, rotation=0, order=2):
+    if order < sides/2:
+        return None
     polygonInfo = getPolygon(bounds, sides, rotation)
     polygonInfo['order'] = order
     if sides % order == 0:
@@ -83,6 +85,9 @@ def getStarLines(bounds, sides=3, rotation=0, order=2):
     lines = []
     #degenerate star
     if sides % order == 0:
+        #start at 0 end at order-1
+            #make side/order lines
+            #add line
         pass
     #regular star
     else:
@@ -93,6 +98,7 @@ def getStarLines(bounds, sides=3, rotation=0, order=2):
             lines.append(line)
             currIndex = (currIndex + order) % sides
     return lines
+
 def getMidpoint(point1, point2):
     return ((point1[0]+point2[0])/2, (point1[1]+point2[1])/2)
 
