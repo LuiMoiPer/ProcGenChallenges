@@ -6,10 +6,18 @@ def main():
     img = Image.new('RGB', (1000, 1000), 'hsb(5,0%,50%)')
     draw = ImageDraw.Draw(img)
 
-    bounds = [(100, 100), (900, 900)]
-    lines = getStarLines(bounds, sides=8, rotation=22, order=3)
+    bounds = [(00, 00), (1000, 1000)]
+    polyParams = {
+        'bounds': bounds,
+        'sides': 11,
+        'rotation': 0,
+        'order': 2
+    }
+    lines = getStarLines(**polyParams)
     drawLines(draw, lines)
-    drawOutline(draw, getPolygon(bounds, sides=8, rotation=22))
+    print(getStarPolygon(**polyParams))
+    drawInscribe(draw, getStarPolygon(**polyParams))
+
     img.show()
 
 # TODO: replace
@@ -24,7 +32,6 @@ def drawLayer(draw, bounds, sides=3, offset=0, outerCircle=True, innerCircle=Tru
     if innerCircle:
         draw.ellipse(polygon['innerCircleBounds'])
     return polygon
-
 
 def getPolygon(bounds, sides=3, rotation=0):
     if sides < 2:
@@ -69,7 +76,7 @@ def getPolygonLines(shapeInfo):
     return lines
 
 def getStarPolygon(bounds, sides=3, rotation=0, order=2):
-    if order < sides/2:
+    if order > sides/2.0:
         return None
     polygonInfo = getPolygon(bounds, sides, rotation)
     polygonInfo['order'] = order
@@ -78,6 +85,14 @@ def getStarPolygon(bounds, sides=3, rotation=0, order=2):
     else:
         polygonInfo['degenerate'] = False
     #set intersections
+    #set inscribeBounds
+    if sides > 2:
+        start = (len(polygonInfo['points']) - order) // 2
+        center = polygonInfo['center']
+        midpoint = getMidpoint(polygonInfo['points'][start], polygonInfo['points'][start+order])
+        radius = getDistance(center, midpoint)
+        inscribeBounds = [(center[0]-radius, center[1]-radius), (center[0]+radius, center[1]+radius)]
+        polygonInfo['inscribeBounds'] = inscribeBounds
     return polygonInfo
 
 def getStarLines(bounds, sides=3, rotation=0, order=2):
@@ -85,15 +100,16 @@ def getStarLines(bounds, sides=3, rotation=0, order=2):
     lines = []
     #degenerate star
     if sides % order == 0:
-        #start at 0 end at order-1
-            #make side/order lines
-            #add line
-        pass
+        for start in range(order):
+            currIndex = start
+            for i in range(int(sides/order)):
+                line = [polygonInfo['points'][currIndex], polygonInfo['points'][(currIndex + order) % sides]]
+                lines.append(line)
+                currIndex = (currIndex + order) % sides
     #regular star
     else:
         currIndex = 0
         for i in range(sides):
-            print(currIndex)
             line = [polygonInfo['points'][currIndex], polygonInfo['points'][(currIndex + order) % sides]]
             lines.append(line)
             currIndex = (currIndex + order) % sides
