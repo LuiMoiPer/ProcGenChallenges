@@ -1,6 +1,6 @@
-class AlchemyCircle:
+from math import acos, cos, degrees, hypot, radians, sin, sqrt
 
-    from math import acos, cos, degrees, hypot, radians, sin, sqrt
+class AlchemyCircle:
 
     def __init__(self, center, radius, sides, order=1, rotation=0):
         ## TODO: error checking
@@ -84,15 +84,17 @@ class AlchemyCircle:
         return self._sides
 
     @sides.setter
-    def sides(self, sides, order=1):
+    def sides(self, sides):
         ## TODO: error checking
         self._sides = sides
-        self._order = order
+        self._order = 1
         self._updatePoints()
 
     #Updaters
     def _updateDegenerate(self):
-        if self.sides % self.order == 0:
+        if self.order == 1:
+            self._degenerate = False
+        elif self.sides % self.order == 0:
             self._degenerate = True
         else:
             self._degenerate = False
@@ -108,6 +110,7 @@ class AlchemyCircle:
             self._intersections = []
             for currLine in range(self.sides):
                 for crosLine in range(currLine - self.order + 1, currLine):
+                    # TODO: fix index out of range, sides = 6 order = 2
                     intersection = AlchemyCircle.getIntersection(self.lines[currLine], self.lines[crosLine])
                     self._intersections.append(intersection)
 
@@ -120,24 +123,24 @@ class AlchemyCircle:
         else:
             self._lines = []
             currLine = 0
-            for i in range(sides):
+            for i in range(self.sides):
                 line = (self.points[currLine], self.points[(currLine + self.order) % self.sides])
-        _updateIntersections()
-        _updateInlineRadius()
+        self._updateIntersections()
+        self._updateInlineRadius()
 
     def _updatePoints(self):
         self._points = []
         bounds = self.getOutlineBounds()
         step = 360.0 / self.sides
-        for deg in [i * step + rotation for i in range(self.sides)]:
+        for deg in [i * step + self.rotation for i in range(self.sides)]:
             #make coord on unit circle then shift it so (0, 0) is top left
             point = (cos(radians(deg)) + 1, sin(radians(deg)) + 1)
             #scale and offset the coord so they fit the bounding box
             point = (point[0] * self.radius, point[1] * self.radius)
             point = (point[0] + bounds[0][0], point[1] + bounds[0][1])
-            points.append(point)
-        _updateLines()
-        _updateSegmentLines()
+            self._points.append(point)
+        self._updateLines()
+        self._updateSegmentLines()
 
     def _updateSegmentLines(self):
         self._segmentLines = []
