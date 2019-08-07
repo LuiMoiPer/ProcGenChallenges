@@ -104,12 +104,14 @@ class AlchemyCircle:
         self._inlineRadius = AlchemyCircle.getDistance(self.center, midpoint)
 
     def _updateIntersections(self):
+        print(self.lines, flush=True)
         if self.order == 1:
             self._intersections = []
         else:
             self._intersections = []
             for currLine in range(self.sides):
                 for crosLine in range(currLine - self.order + 1, currLine):
+                    print(f'Curr: {currLine}   Cros: {crosLine}')
                     # TODO: fix index out of range, sides = 6 order = 2
                     intersection = AlchemyCircle.getIntersection(self.lines[currLine], self.lines[crosLine])
                     self._intersections.append(intersection)
@@ -118,13 +120,16 @@ class AlchemyCircle:
         if self.order == 1:
             self._lines = []
             for i in range(len(self.points)):
-                line = (self.points[i], self.points[(i + 1) % len(self.points)])
+                line = [self.points[i], self.points[(i + 1) % len(self.points)]]
                 self._lines.append(line)
         else:
             self._lines = []
             currLine = 0
             for i in range(self.sides):
-                line = (self.points[currLine], self.points[(currLine + self.order) % self.sides])
+                print(i)
+                line = [self.points[currLine], self.points[(currLine + self.order) % self.sides]]
+                self._lines.append(line)
+                currLine = (currLine + 1) % self.sides
         self._updateIntersections()
         self._updateInlineRadius()
 
