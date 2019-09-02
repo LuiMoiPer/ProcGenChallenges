@@ -8,6 +8,8 @@ class AlchemyCircle:
         self._center = center
         self._radius = radius
         self._sides = sides
+        if order > sides // 2:
+            order = sides // 2
         self._order = order
         self._rotation = rotation
         self._updatePoints()
@@ -48,6 +50,8 @@ class AlchemyCircle:
     @order.setter
     def order(self, order):
         ## TODO: error checking
+        if order > sides // 2:
+            order = sides // 2
         self._order = order
         self._updateDegenerate()
         self._updateLines()
@@ -164,11 +168,27 @@ class AlchemyCircle:
 
     # TODO:
     #doesn't handle whether things are opaque or not
-    def getSvg():
-        pass
+    def getSvg(self, outline=True, polygon=True, inline=True, svgTags=True):
+        width = self.getOutlineBounds()[1][0]
+        height = self.getOutlineBounds()[1][1]
 
+        if svgTags:
+            output = f'<svg width="{width + 1}" height="{height + 1}">'
+        #outline
+        if outline:
+            output += f'\n\t<circle cx="{self.center[0]}" cy="{self.center[1]}" r="{self.radius}" stroke="black" fill="none"/>'
+        #polygon
+        if polygon:
+            for line in self.lines:
+                output += f'\n\t<line x1="{line[0][0]}" y1="{line[0][1]}" x2="{line[1][0]}" y2="{line[1][1]}" stroke="black"/>'
+        #inline
+        if inline:
+            output += f'\n\t<circle cx="{self.center[0]}" cy="{self.center[1]}" r="{self.inlineRadius}" stroke="black" fill="none"/>'
 
-    # TODO:
+        if svgTags:
+            output += f'\n</svg>'
+        return output
+
     @classmethod
     def random(cls, center=None, minRadius=50, maxRadius=500, minSides=3, maxSides=12, minOrder=1, maxOrder=None, minRotation=0, maxRotation=360):
         sides = random.randint(minSides, maxSides)
