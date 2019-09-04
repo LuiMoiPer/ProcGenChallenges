@@ -3,15 +3,16 @@ from AlchemyCircle import AlchemyCircle as AC
 from PIL import Image, ImageDraw
 import random
 
-img = Image.new('RGB', (1000, 1000), 'hsb(5,0%,50%)')
+foreground = 'hsb(5,0%,100%)'
+background = 'hsb(5,0%,50%)'
+img = Image.new('RGB', (1000, 1000), background)
 draw = ImageDraw.Draw(img)
 
 def main():
-    pass
-
-def drawLines(lines):
-    for line in lines:
-        draw.line(line)
+    for i in range(500):
+        generateCircle()
+        img.save(f'GeneratedAlchemyCircles/{i}.png')
+        draw.rectangle([(0,0), (1000, 1000)], fill=background)
 
 def generateCircle():
     #Choose how many layers there will be
@@ -22,7 +23,14 @@ def generateCircle():
 
     layers = random.randint(1, 6)
     i = 0
+    circleParams = {
+        'center' : (500, 500),
+        'radius' : 400,
+        'sides' : random.randint(3, 8),
+        'order' : 1
+    }
     while i < layers:
+        currCircle = AC(**circleParams)
         features = {
             'inline' : bool(random.getrandbits(1)),
             'nodes' : bool(random.getrandbits(1)),
@@ -35,53 +43,66 @@ def generateCircle():
         if features['outline']:
             #choose if the oufline has a fill or not
             #draw the outline
-            pass
-        elif features['star']:
+            if bool(random.getrandbits(1)):
+                draw.ellipse(currCircle.getOutlineBounds(), outline=foreground)
+            else:
+                draw.ellipse(currCircle.getOutlineBounds(), outline=foreground, fill=background)
+
+        if features['star']:
             #choose which order the star is
-            pass
-        elif features['polygon']:
+            currCircle.order = random.randint(1, currCircle.sides+1)
+
+        if features['polygon']:
             #draw the polygon
-            pass
-        elif features['segmentLines']:
+            for line in currCircle.lines:
+                draw.line(line)
+
+        if features['segmentLines']:
             #draw the segment lines
-            pass
-        elif features['inline']:
+            for line in currCircle.segmentLines:
+                draw.line(line)
+
+        if features['inline']:
             #choose wether there is a fill or not
-            pass
-        else features['nodes']:
-            #choose what points the nodes will be on
+            if bool(random.getrandbits(1)):
+                draw.ellipse(currCircle.getInlineBounds(), outline=foreground)
+            else:
+                draw.ellipse(currCircle.getInlineBounds(), outline=foreground, fill=background)
+
+        if features['nodes']:
             #choose if the nodes are filled
             #choose if the nodes are rotated towards the center
-            pass
+            drawBackground = bool(random.getrandbits(1))
+            fillNodes = bool(random.getrandbits(1))
+            rotateToCenter = bool(random.getrandbits(1))
+
+            for point in currCircle.points:
+                nodeCircle = AC(center=point, radius=25, sides=random.randint(3,currCircle.sides))
+
+                if rotateToCenter:
+                    nodeCircle.rotation = AC.getAngle(nodeCircle.center, currCircle.center)
+
+                if drawBackground:
+                    draw.ellipse(nodeCircle.getOutlineBounds(), outline=foreground, fill=background)
+                else:
+                    draw.ellipse(nodeCircle.getOutlineBounds(), outline=foreground)
+
+                if fillNodes:
+                    for line in nodeCircle.lines:
+                        draw.line(line)
 
 
-def recursiveInnerCircles(circle, minRadius):
-    import random
-    #draw a circle
-    if random.randint(0, 9) % 2 == 0:
-        draw.ellipse(circle.getOutlineBounds(), outline='hsb(0,0%,100%)', fill='hsb(5,0%,50%)')
-    drawLines(circle.lines)
+        #update cricle params
+        circleParams['sides'] = random.randint(3, 8)
+        circleParams['order'] = 1
+        if bool(random.getrandbits(1)):
+            circleParams['radius'] = random.randint(int(currCircle.radius * 0.25), int(currCircle.radius + 25))
+        elif bool(random.getrandbits(1)):
+            circleParams['radius'] = currCircle.inlineRadius
+        else:
+            circleParams['radius'] = currCircle.radius
 
-    if circle.inlineRadius >= minRadius:
-        circleParams = {
-            'center': circle.center,
-            'minRadius': circle.inlineRadius,
-            'maxRadius': circle.inlineRadius,
-            'maxRotation': 0
-        }
-
-        #make stuff on intersections
-        for intersection in circle.intersections:
-            intersectionCircleParams = {
-                'center': intersection,
-                'minRadius': minRadius,
-                'maxRadius': AC.getDistance(circle.intersections[0], circle.intersections[1]) / 2,
-                'minRotation': AC.getAngle(intersection, circle.center),
-                'maxRotation': AC.getAngle(intersection, circle.center)
-            }
-            recursiveInnerCircles(AC.random(**intersectionCircleParams), minRadius)
-
-        recursiveInnerCircles(AC.random(**circleParams), minRadius)
+        i+=1
 
 if __name__ == '__main__':
     main()

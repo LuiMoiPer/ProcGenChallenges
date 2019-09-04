@@ -50,8 +50,11 @@ class AlchemyCircle:
     @order.setter
     def order(self, order):
         ## TODO: error checking
-        if order > sides // 2:
-            order = sides // 2
+        if order < 1:
+            order = 1
+
+        if order > self._sides // 2:
+            order = self._sides // 2
         self._order = order
         self._updateDegenerate()
         self._updateLines()
@@ -215,6 +218,8 @@ class AlchemyCircle:
     def getAngle(origin, point):
         vector1 = (point[0] - origin[0], point[1] - origin[1])
         magVector1 = hypot(vector1[0], vector1[1])
+        if magVector1 == 0:
+            magVector1 += 0.001
         angle = acos(vector1[0]/magVector1)
         angle = degrees(angle)
         if vector1[1] < 0:
