@@ -9,7 +9,7 @@ img = Image.new('RGB', (1000, 1000), background)
 draw = ImageDraw.Draw(img)
 
 def main():
-    for i in range(500):
+    for i in range(50):
         generateCircle()
         img.save(f'GeneratedAlchemyCircles/{i}.png')
         draw.rectangle([(0,0), (1000, 1000)], fill=background)
