@@ -27,8 +27,8 @@ class ReactionDiffusion:
         while x < corner[0] + dimmensions[0]:
             y = corner[1]
             while y < corner[1] + dimmensions[1]:
-                _, _, b = self.pixels[x, y]
-                self.pixels[x, y] = (255, 0, b)
+                _, g, b = self.pixels[x, y]
+                self.pixels[x, y] = (255, g, b)
                 y += 1
             x += 1
 
@@ -47,18 +47,29 @@ class ReactionDiffusion:
 
         # use normalized value between 0 and 1
         normR, normG = r / 255, g / 255
-        normR += self.diffusionRate[R] * self.laplace(x, y, R) - normR * normG ** 2 + self.feedRate * (1 - normR)
-        normG += self.diffusionRate[G] * self.laplace(x, y, G) + normR * normG ** 2 - (self.killRate + self.feedRate) * normG
 
-        r *= 255
-        g *= 255
-        b *= 255
+        diffusionRate = self.diffusionRate[R]
+        laplace = self.laplace(x, y, R)
+        reaction = normR * normG ** 2
+        feed = self.feedRate * (1 - normR)
+        # normR += self.diffusionRate[R] * self.laplace(x, y, R) - normR * normG ** 2 + self.feedRate * (1 - normR)
+        normR += diffusionRate * laplace - reaction + feed
+
+        diffusionRate = self.diffusionRate[G]
+        laplace = self.laplace(x, y, G)
+        reaction = normR * normG ** 2
+        kill = (self.killRate + self.feedRate) * normG
+        # normG += self.diffusionRate[G] * self.laplace(x, y, G) + normR * normG ** 2 - (self.killRate + self.feedRate) * normG
+        normG += diffusionRate * laplace + reaction - kill
+
+        r = normR * 255
+        g = normG * 255
 
         # keeping values in bounds
-        r = 0 if r < 0 else r
-        r = 255 if r > 255 else r
-        g = 0 if g < 0 else g
-        g = 255 if g > 255 else g
+        r = 0 if r < 0 else int(r)
+        r = 255 if r > 255 else int(r)
+        g = 0 if g < 0 else int(g)
+        g = 255 if g > 255 else int(g)
         return (r, g, b)
 
     def laplace(self, x, y, channel):
@@ -94,60 +105,62 @@ class ReactionDiffusion:
     def laplaceEdge(self, x, y, channel):
         sum = 0
         if x is 0:
-            sum += self.pixels[x, y - 1][channel] / 255 * 0.2
+            sum += self.pixels[x, y - 1][channel] / 255 * 0.25
             sum += self.pixels[x, y][channel] / 255 * - 1
-            sum += self.pixels[x, y + 1][channel] / 255 * 0.2
-            sum += self.pixels[x + 1, y - 1][channel] / 255 *  0.05
-            sum += self.pixels[x + 1, y][channel] / 255 * 0.2
-            sum += self.pixels[x + 1, y + 1][channel] / 255 *  0.05
+            sum += self.pixels[x, y + 1][channel] / 255 * 0.25
+            sum += self.pixels[x + 1, y - 1][channel] / 255 *  0.125
+            sum += self.pixels[x + 1, y][channel] / 255 * 0.25
+            sum += self.pixels[x + 1, y + 1][channel] / 255 *  0.125
         if x is self.image.size[0] - 1:
-            sum += self.pixels[x - 1, y - 1][channel] / 255 * 0.05
-            sum += self.pixels[x - 1, y][channel] / 255 * 0.2
-            sum += self.pixels[x - 1, y + 1][channel] / 255 *  0.05
-            sum += self.pixels[x, y - 1][channel] / 255 * 0.2
+            sum += self.pixels[x - 1, y - 1][channel] / 255 * 0.125
+            sum += self.pixels[x - 1, y][channel] / 255 * 0.25
+            sum += self.pixels[x - 1, y + 1][channel] / 255 *  0.125
+            sum += self.pixels[x, y - 1][channel] / 255 * 0.25
             sum += self.pixels[x, y][channel] / 255 * - 1
-            sum += self.pixels[x, y + 1][channel] / 255 * 0.2
+            sum += self.pixels[x, y + 1][channel] / 255 * 0.25
         if y is 0:
-            sum += self.pixels[x - 1, y][channel] / 255 * 0.2
-            sum += self.pixels[x - 1, y + 1][channel] / 255 *  0.05
+            sum += self.pixels[x - 1, y][channel] / 255 * 0.25
+            sum += self.pixels[x - 1, y + 1][channel] / 255 *  0.125
             sum += self.pixels[x, y][channel] / 255 * - 1
-            sum += self.pixels[x, y + 1][channel] / 255 * 0.2
-            sum += self.pixels[x + 1, y][channel] / 255 * 0.2
-            sum += self.pixels[x + 1, y + 1][channel] / 255 *  0.05
+            sum += self.pixels[x, y + 1][channel] / 255 * 0.25
+            sum += self.pixels[x + 1, y][channel] / 255 * 0.25
+            sum += self.pixels[x + 1, y + 1][channel] / 255 *  0.125
         if y is self.image.size[1] - 1:
-            sum += self.pixels[x - 1, y - 1][channel] / 255 * 0.05
-            sum += self.pixels[x - 1, y][channel] / 255 * 0.2
-            sum += self.pixels[x, y - 1][channel] / 255 * 0.2
+            sum += self.pixels[x - 1, y - 1][channel] / 255 * 0.125
+            sum += self.pixels[x - 1, y][channel] / 255 * 0.25
+            sum += self.pixels[x, y - 1][channel] / 255 * 0.25
             sum += self.pixels[x, y][channel] / 255 * - 1
-            sum += self.pixels[x + 1, y - 1][channel] / 255 *  0.05
-            sum += self.pixels[x + 1, y][channel] / 255 * 0.2
+            sum += self.pixels[x + 1, y - 1][channel] / 255 *  0.125
+            sum += self.pixels[x + 1, y][channel] / 255 * 0.25
         return sum
 
     def laplaceCorner(self, x, y, channel):
         sum = 0
         if x is 0 and y is 0:
             sum += self.pixels[x, y][channel] / 255 * - 1
-            sum += self.pixels[x, y + 1][channel] / 255 * 0.2
-            sum += self.pixels[x + 1, y][channel] / 255 * 0.2
-            sum += self.pixels[x + 1, y + 1][channel] / 255 *  0.05
+            sum += self.pixels[x, y + 1][channel] / 255 * 0.4
+            sum += self.pixels[x + 1, y][channel] / 255 * 0.4
+            sum += self.pixels[x + 1, y + 1][channel] / 255 *  0.2
         if x is 0 and y is self.image.size[1] - 1:
-            sum += self.pixels[x, y - 1][channel] / 255 * 0.2
+            sum += self.pixels[x, y - 1][channel] / 255 * 0.4
             sum += self.pixels[x, y][channel] / 255 * - 1
-            sum += self.pixels[x + 1, y - 1][channel] / 255 *  0.05
-            sum += self.pixels[x + 1, y][channel] / 255 * 0.2
+            sum += self.pixels[x + 1, y - 1][channel] / 255 *  0.2
+            sum += self.pixels[x + 1, y][channel] / 255 * 0.4
         if x is self.image.size[0] - 1 and y is 0:
-            sum += self.pixels[x - 1, y][channel] / 255 * 0.2
-            sum += self.pixels[x - 1, y + 1][channel] / 255 *  0.05
+            sum += self.pixels[x - 1, y][channel] / 255 * 0.4
+            sum += self.pixels[x - 1, y + 1][channel] / 255 *  0.2
             sum += self.pixels[x, y][channel] / 255 * - 1
-            sum += self.pixels[x, y + 1][channel] / 255 * 0.2
+            sum += self.pixels[x, y + 1][channel] / 255 * 0.4
         if x is self.image.size[0] - 1 and self.image.size[1] - 1:
-            sum += self.pixels[x - 1, y - 1][channel] / 255 * 0.05
-            sum += self.pixels[x - 1, y][channel] / 255 * 0.2
-            sum += self.pixels[x, y - 1][channel] / 255 * 0.2
+            sum += self.pixels[x - 1, y - 1][channel] / 255 * 0.2
+            sum += self.pixels[x - 1, y][channel] / 255 * 0.4
+            sum += self.pixels[x, y - 1][channel] / 255 * 0.4
             sum += self.pixels[x, y][channel] / 255 * - 1
         return sum
 
 if __name__ == "__main__":
-    rd = ReactionDiffusion((100, 100))
-    rd.seed((49, 49), (3, 3))
-    rd.save()
+    rd = ReactionDiffusion((3, 3))
+    rd.seed((1, 1), (1, 1))
+    for i in range(10):
+        rd.step()
+        rd.save()
