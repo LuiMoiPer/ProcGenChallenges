@@ -1,6 +1,6 @@
 class UniqueDeque:
     def __init__(self, move_dupes = False):
-        self._seen = {}
+        self._nodes = {}
         self._head = None
         self._tail = None
         self._len = 0
@@ -9,26 +9,84 @@ class UniqueDeque:
     def __len__(self):
         return self._len
 
+    def _remove_node(self, node):
+        # update head and tail if needed
+        if node == self._head:
+            self._head = node.next
+        if node == self._tail:
+            self._tail = node.prev
+        # remove the node
+        prev = node.prev
+        _next = node.next
+        # TODO: should we remove the entry in self._nodes?
+        # mend the list
+        if prev is not None:
+            prev.next = _next
+        if _next is not None:
+            _next.prev = prev
+
+
     def _move_right(self, item):
-        raise NotImplementedError
+        if self._len < 1:
+            return
+        node = self._nodes[item]
+        if node != self._tail:
+            self._remove_node(node)
+            self._append_node(node)
 
     def _move_left(self, item):
-        raise NotImplementedError
+        if self._len < 1:
+            return
+        node = self._nodes[item]
+        if node != self._head:
+            self._remove_node(node)
+            self._append_node_left(node)
+
+    def _append_node(self, node):
+        if self._len == 0:
+            self._head = node
+            self._tail = node
+        else:
+            # add new node to the list
+            self._tail.next = node
+            node.prev = self._tail
+            # update tail
+            self._tail = node
+        # update the list
+        self._len += 1
+
+    def _append_node_left(self, node):
+        if self._len == 0:
+            self._head = node
+            self._tail = node
+        else:
+            # add new node to the list
+            node.next = self._head
+            self._head.prev = node
+            # update head
+            self._head = node
+        # update the list
+        self._len += 1
 
     def append(self, item):
-        if item not in self._seen:
-            pass
-        elif item in self._seen and self._move_dupes:
-            pass
-        else:
-            pass
-        raise NotImplementedError
+        updated = False
+        if item not in self._nodes:
+            # make node and store in seen
+            node = DoublyLinkedNode(item)
+            self._nodes[item] = node
+            # add the node to the list
+            self._append_node(node)
+            updated = True
+        elif item in self._nodes and self._move_dupes:
+            self._move_right(item)
+            updated = True
+        return updated
 
     def append_left(self, item):
-        if item not in self._seen:
+        if item not in self._nodes:
             pass
-        elif item in self._seen and self._move_dupes:
-            pass
+        elif item in self._nodes and self._move_dupes:
+            self._move_left(item)
         else:
             pass
         raise NotImplementedError
