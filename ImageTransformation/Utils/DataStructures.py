@@ -1,3 +1,4 @@
+import math
 class UniqueDeque:
     def __init__(self, move_dupes = False):
         self._nodes = {}
@@ -236,6 +237,61 @@ class DoublyLinkedNode:
     @data.setter
     def data(self, d):
         self._data = d
+
+class Point2d:
+    def __init__(self, x, y):
+        self._x = x
+        self._y = y
+
+    def __str__(self):
+        return f"{self._x}:{self._y}"
+    
+    def __repr__(self):
+        return f"Point2d({self._x}, {self._y})"
+    
+    def __add__(self, other):
+        return Point2d(self._x + other.x, self._y + other.y)
+
+    def __iadd__(self, other):
+        self._x += other.x
+        self._y += other.y
+        return self
+
+    def __sub__(self, other):
+        return Point2d(self._x - other.x, self._y - other.y)
+
+    def __isub__(self, other):
+        self._x -= other.x
+        self._y -= other.y
+        return self
+
+    def __mul__(self, other):
+        return Point2d(self._x * other.x, self._y * other.y)
+
+    def __imul__(self, other):
+        self._x *= other.x
+        self._y *= other.y
+        return self
+
+    def __truediv__(self, other):
+        return Point2d(self._x // other.x, self._y // other.y)
+
+    def __idiv__(self, other):
+        self._x //= other.x
+        self._y //= other.y
+        return self
+
+    @staticmethod
+    def distance(a, b):
+        return math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
+
+    @property
+    def x(self):
+        return self._x
+
+    @property
+    def y(self):
+        return self._y
 
 if __name__ == "__main__":
     pass
