@@ -9,6 +9,14 @@ class UniqueDeque:
     def __len__(self):
         return self._len
 
+    def __str__(self):
+        out = []
+        cursor = self._head
+        while cursor is not None:
+            out.append(cursor.data)
+            cursor = cursor.next
+        return str(out)
+
     def _remove_node(self, node):
         # update head and tail if needed
         if node == self._head:
@@ -17,14 +25,14 @@ class UniqueDeque:
             self._tail = node.prev
         # remove the node
         prev = node.prev
-        _next = node.next
-        # TODO: should we remove the entry in self._nodes?
+        nxt = node.next
+        node.prev = None
+        node.next = None
         # mend the list
         if prev is not None:
-            prev.next = _next
-        if _next is not None:
-            _next.prev = prev
-
+            prev.next = nxt
+        if nxt is not None:
+            nxt.prev = prev
 
     def _move_right(self, item):
         if self._len < 1:
@@ -52,8 +60,6 @@ class UniqueDeque:
             node.prev = self._tail
             # update tail
             self._tail = node
-        # update the list
-        self._len += 1
 
     def _append_node_left(self, node):
         if self._len == 0:
@@ -65,9 +71,15 @@ class UniqueDeque:
             self._head.prev = node
             # update head
             self._head = node
-        # update the list
-        self._len += 1
 
+    @property
+    def move_dupes(self):
+        return self._move_dupes
+
+    @move_dupes.setter
+    def move_dupes(self, value):
+        self._move_dupes = value
+  
     def append(self, item):
         updated = False
         if item not in self._nodes:
@@ -76,6 +88,7 @@ class UniqueDeque:
             self._nodes[item] = node
             # add the node to the list
             self._append_node(node)
+            self._len += 1
             updated = True
         elif item in self._nodes and self._move_dupes:
             self._move_right(item)
@@ -83,22 +96,49 @@ class UniqueDeque:
         return updated
 
     def append_left(self, item):
+        updated = False
         if item not in self._nodes:
-            pass
+            # mack the node and update the dict
+            node = DoublyLinkedNode(item)
+            self._nodes[item] = node
+            self._append_node_left(node)
+            self._len += 1
+            updated = True
         elif item in self._nodes and self._move_dupes:
             self._move_left(item)
-        else:
-            pass
-        raise NotImplementedError
+            updated = True
+        return updated
         
     def pop(self):
-        raise NotImplementedError
+        if self._len == 0:
+            return None
+        elif self._len > 0:
+            node = self._tail
+            self._remove_node(node)
+            item = node.data
+            del self._nodes[item]
+            self._len -= 1
+        return item
 
     def pop_left(self):
-        raise NotImplementedError
+        if self._len == 0:
+            return None
+        elif self._len > 0:
+            node = self._head
+            self._remove_node(node)
+            item = node.data
+            del self._nodes[item]
+            self._len -= 1
+        return item
 
     def remove(self, item):
-        raise NotImplementedError    
+        updated = False
+        if item in self._nodes:
+            self._remove_node(self._nodes[item])
+            del self._nodes[item]
+            self._len -= 1
+            updated = True
+        return updated
 
 
 class DoublyLinkedList:
