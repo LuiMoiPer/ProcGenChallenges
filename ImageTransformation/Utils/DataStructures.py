@@ -6,6 +6,9 @@ class UniqueDeque:
         self._tail = None
         self._len = 0
         self._move_dupes = move_dupes
+
+    def __contains__(self, item):
+        return item in self._nodes
     
     def __len__(self):
         return self._len
