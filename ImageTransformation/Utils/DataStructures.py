@@ -293,6 +293,10 @@ class Point2d:
     def y(self):
         return self._y
 
+    @property
+    def distance_from_origin(self):
+        return math.sqrt(self._x ** 2 + self._y ** 2)
+
 if __name__ == "__main__":
     pass
 
